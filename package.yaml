@@ -29,6 +29,7 @@ dependencies:
 - megaparsec
 - array
 - MemoTrie
+- regex-posix
 
 ghc-options:
 - -Wcompat

@@ -4,38 +4,38 @@ module Day3
   )
 where
 
-import qualified Data.Vector as V
+import Data.List.Split
 import Debug.Trace (traceShowId)
+import Text.Regex.Posix
 
 part1 :: String -> Int
-part1 input = countSlope rows 1 3
-  where
-    rows = lines input
-    width = length $ head rows
+part1 input =
+  let tuples = parse input
+   in sum $ map (uncurry (*)) tuples
 
-enumerate = zip [0 ..]
+parse :: String -> [(Int, Int)]
+parse input =
+  let matches = getAllTextMatches $ input =~ "mul\\([0-9]+,[0-9]+\\)"
+   in map toTuple matches
+
+toTuple :: String -> (Int, Int)
+toTuple mul =
+  let parts = splitOn "," . init . drop 4 $ mul
+   in (read . head $ parts, read . last $ parts)
 
 part2 :: String -> Int
 part2 input =
-  product
-    [ countSlope rows 1 1,
-      countSlope rows 1 3,
-      countSlope rows 1 5,
-      countSlope rows 1 7,
-      countSlope rows 2 1
-    ]
-  where
-    rows = lines input
-    width = length $ head rows
+  let tuples = parse2 input
+   in sum $ map (uncurry (*)) tuples
 
-countSlope rows down right =
-  length $
-    [ char
-      | (row_ix, row) <- enumerate rows,
-        row_ix `mod` down == 0,
-        (char_ix, char) <- enumerate row,
-        char_ix == ((row_ix `div` down) * right) `mod` width,
-        char == '#'
-    ]
-  where
-    width = length $ head rows
+parse2 :: String -> [(Int, Int)]
+parse2 input =
+  let matches = traceShowId $ getAllTextMatches $ input =~ "mul\\([0-9]+,[0-9]+\\)|do\\(\\)|don't\\(\\)"
+   in map toTuple $ traceShowId $ filterMatches True matches
+
+filterMatches :: Bool -> [String] -> [String]
+filterMatches _ [] = []
+filterMatches _ ("do()":rest) = filterMatches True rest
+filterMatches _ ("don't()":rest) = filterMatches False rest
+filterMatches True (mul:rest) = mul : filterMatches True rest
+filterMatches False (_:rest) = filterMatches False rest
