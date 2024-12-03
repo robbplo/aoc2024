@@ -21,14 +21,14 @@ parse = map (map read . splitOn " ") . lines
 
 isSafe :: [Int] -> Bool
 isSafe nums =
-  let zipped = zipWith (-) nums (tail nums)
-      monotonic = all (> 0) zipped || all (< 0) zipped
-   in monotonic && all (inRange (1, 3) . abs) zipped
+  let diffs = zipWith (-) nums (tail nums)
+      monotonic = all (>= 0) diffs || all (<= 0) diffs
+   in monotonic && all (inRange (1, 3) . abs) diffs
 
 part2 :: String -> Int
 part2 input = length $ filter maybeSafe $ parse input
 
 maybeSafe :: [Int] -> Bool
 maybeSafe nums =
-  let res = any isSafe $ [delete x nums | x <- nums]
-   in trace (show res <> show nums) res || isSafe nums
+  let res = any isSafe $ nums : [delete x nums | x <- nums]
+   in trace (show res <> show nums) res
