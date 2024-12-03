@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Day2
   ( part1,
     part2,
@@ -9,8 +7,6 @@ where
 import Data.Array
 import Data.List (delete)
 import Data.List.Split
-import qualified Data.Map.Strict as M
-import qualified Data.Text as T
 import Debug.Trace
 
 part1 :: String -> Int
@@ -29,6 +25,8 @@ part2 :: String -> Int
 part2 input = length $ filter maybeSafe $ parse input
 
 maybeSafe :: [Int] -> Bool
-maybeSafe nums =
-  let res = any isSafe $ nums : [delete x nums | x <- nums]
-   in trace (show res <> show nums) res
+maybeSafe nums = any isSafe $ nums : [deleteAt (x - 1) nums | x <- [1 .. length nums]]
+
+deleteAt idx xs = lft ++ tail rgt
+  where
+    (lft, rgt) = splitAt idx xs
