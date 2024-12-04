@@ -15,7 +15,7 @@ type Grid a = Array Pos a
 part1 :: String -> Int
 part1 input = length . filter (== '#') . A.elems . part1' $ parse input
 
-x = take 10 $ map ((*) 2 . (+) 1) [1..]
+x = take 10 $ map ((*) 2 . (+) 1) [1 ..]
 
 part1' :: Grid Char -> Grid Char
 part1' grid
@@ -75,7 +75,8 @@ seen grid pos dir
   | grid ! next == 'L' = False
   | grid ! next == '#' = True
   | otherwise = seen grid next dir
-  where next = addPos pos dir
+  where
+    next = addPos pos dir
 
 part2 :: String -> Int
 part2 input = length . filter (== '#') . A.elems . part2' $ parse input

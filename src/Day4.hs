@@ -1,77 +1,68 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Day4
   ( part1,
     part2,
   )
 where
 
-import Data.Char (isDigit, isHexDigit)
-import Data.Either (fromRight)
-import Data.Ix (Ix (inRange))
-import qualified Data.Map.Strict as M
-import qualified Data.Text as T
-import Data.Text.Read
-import Data.Void
-import Text.Megaparsec
+import Control.Monad (join)
+import qualified Data.Array as A
+import Debug.Trace
 
+type Pos = (Int, Int)
 
-data Passport = Passport
-  { birthYear :: Maybe Int,
-    issueYear :: Maybe Int,
-    expirationYear :: Maybe Int,
-    height :: Maybe Int,
-    hairColor :: Maybe String,
-    eyeColor :: Maybe String,
-    passportID :: Maybe Int,
-    countryID :: Maybe Int
-  }
+type Grid = A.Array Pos Char
 
 part1 :: String -> Int
-part1 input = length $ filter valid pairs
-  where
-    pairs = split $ T.pack input
+part1 = dfs . parse
 
-split :: T.Text -> [M.Map T.Text T.Text]
-split str = pairs
-  where
-    words = map T.words $ T.splitOn "\n\n" str
-    split word = (T.take 3 word, T.drop 4 word)
-    toMap words = M.fromList $ map split words
-    pairs = map toMap words
+parse :: String -> Grid
+parse input =
+  let l = lines input
+      rows = length l
+      cols = length $ head l
+   in A.listArray ((1, 1), (rows, cols)) $ join l
 
-valid :: M.Map T.Text T.Text -> Bool
-valid passport
-  | size == 8 = True
-  | size == 7 && M.notMember "cid" passport = True
-  | otherwise = False
-  where
-    size = M.size passport
+dfs :: Grid -> Int
+dfs grid =
+  let words = join . map wordIndices $ A.indices grid
+   in length $ filter (isXmas grid) words
 
-valid2 passport = valid $ M.filterWithKey validField passport
+isXmas :: Grid -> [Pos] -> Bool
+isXmas grid indices =
+  let inRange = all (A.inRange (A.bounds grid)) indices
+      word = map (grid A.!) indices
+   in inRange && word == "XMAS"
+
+wordIndices :: Pos -> [[Pos]]
+wordIndices start =
+  let one :: Pos -> Pos -> [Pos]
+      one (row, col) (rowDiff, colDiff) =
+        [(row + (rowDiff * x), col + (colDiff * x)) | x <- [0 .. 3]]
+      adjacent = [(r, c) | r <- [-1 .. 1], c <- [-1 .. 1], (r, c) /= (0, 0)]
+   in map (one start) adjacent
 
 part2 :: String -> Int
-part2 input = length $ filter valid2 pairs
-  where
-    pairs = split $ T.pack input
+part2 = dfs2 . parse
 
-validField :: T.Text -> T.Text -> Bool
-validField "byr" value = inRange (1920, 2002) $ int value
-validField "iyr" value = inRange (2010, 2020) $ int value
-validField "eyr" value = inRange (2020, 2030) $ int value
-validField "hgt" value
-  | measurement == "cm" && inRange (150, 193) num = True
-  | measurement == "in" && inRange (59, 76) num = True
-  | otherwise = False
-  where
-    (num, measurement) = intstr value
-validField "hcl" value = head str == '#' && length (filter isHexDigit (tail str)) == 6
-  where
-    str = T.unpack value
-validField "ecl" value = value `elem` ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"]
-validField "pid" value = length (filter isDigit (T.unpack value)) == 9
-validField _ _ = True
+dfs2 :: Grid -> Int
+dfs2 grid =
+  let crosses = map masIndices $ A.indices grid
+   in length $ filter (isCrossMas grid) crosses
 
-int value = fst $ intstr value
+isCrossMas :: Grid -> [[Pos]] -> Bool
+isCrossMas grid words =
+  let inRange = all (A.inRange (A.bounds grid)) $ join words
+      isMas = (== "MAS") . map (grid A.!)
+      mases = filter isMas words
+   in inRange && length mases == 2
 
-intstr value = fromRight (0, "") (decimal value)
+masIndices :: Pos -> [[Pos]]
+masIndices (r, c) =
+  let one :: Pos -> Pos -> [Pos]
+      one (row, col) (rowDiff, colDiff) =
+        [(row + (rowDiff * x), col + (colDiff * x)) | x <- [0 .. 2]]
+   in [ one (r - 1, c - 1) (1, 1),
+        one (r - 1, c + 1) (1, -1),
+        one (r + 1, c + 1) (-1, -1),
+        one (r + 1, c - 1) (-1, 1)
+      ]
