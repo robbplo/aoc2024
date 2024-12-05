@@ -5,27 +5,51 @@ module Day5
 where
 
 import Data.List ((\\))
-import Debug.Trace (traceShowId)
+import Data.List.Split (splitOn)
+import Debug.Trace
 import GHC.Float
 
+type Rule = (Int, Int)
+
+type Update = [Int]
+
 part1 :: String -> Int
-part1 input = maximum $ map search (lines input)
+part1 input =
+  let (rules, updates) = traceShowId $ parse input
+      validUpdates = traceShowId $ filter (\u -> checkUpdate rules u []) updates
+   in sum . map middle $ validUpdates
 
-search :: String -> Int
-search input = (row * 8) + col
-  where
-    (row, col) = search' input (0, 127) (0, 7)
+checkUpdate :: [Rule] -> Update -> [Int] -> Bool
+checkUpdate rules [] seen = True
+checkUpdate rules (x : update) seen
+  | all (\r -> checkRule r x seen) rules = checkUpdate rules update (x : seen)
+  | otherwise = False
 
-search' :: String -> (Int, Int) -> (Int, Int) -> (Int, Int)
-search' [] row col = (fst row, snd col)
-search' ('F' : xs) (minrow, maxrow) col = search' xs (minrow, (minrow + maxrow) `div` 2) col
-search' ('B' : xs) (minrow, maxrow) col = search' xs ((minrow + maxrow + 1) `div` 2, maxrow) col
-search' ('L' : xs) row (mincol, maxcol) = search' xs row (mincol, (mincol + maxcol) `div` 2)
-search' ('R' : xs) row (mincol, maxcol) = search' xs row ((mincol + maxcol + 1) `div` 2, maxcol)
+checkRule :: Rule -> Int -> [Int] -> Bool
+checkRule (a, b) num seen
+  -- \| traceShow [a, b, num] False = undefined
+  | num == a = b `notElem` seen
+  | otherwise = True
+
+middle :: Update -> Int
+middle update = update !! (length update `div` 2)
+
+parse :: String -> ([Rule], [Update])
+parse input =
+  let parts = splitOn "\n\n" input
+      rules = lines . head $ parts
+      updates = lines . last $ parts
+   in (map parseRule rules, map parseUpdate updates)
+
+parseRule :: String -> Rule
+parseRule input =
+  let parts = splitOn "|" input
+   in (read . head $ parts, read . last $ parts)
+
+parseUpdate :: String -> Update
+parseUpdate input =
+  let parts = splitOn "," input
+   in map read parts
 
 part2 :: String -> Int
-part2 input = head $ [min .. max] \\ ids
-  where
-    ids = map search $ lines input
-    min = minimum ids
-    max = maximum ids
+part2 input = undefined
