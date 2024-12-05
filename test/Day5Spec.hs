@@ -42,4 +42,4 @@ spec = do
   it "part 1" $ do
     part1 input `shouldBe` 143
   it "part 2" $ do
-    part2 input `shouldBe` 820
+    part2 input `shouldBe` 123
