@@ -5,52 +5,64 @@ module Day8
 where
 
 import Control.Monad
-import Data.Array
+import qualified Data.Array.IArray as A
+import Data.Bifunctor
+import Data.List (groupBy, nub, sortBy)
+import qualified Data.Map.Strict as M
 import Data.Maybe
-import qualified Data.Set as S
 import Debug.Trace
 
+type Pos = (Int, Int)
+
+type Grid = A.Array Pos Char
+
+type Antenna = (Pos, Char)
+
 part1 :: String -> Int
-part1 input = findCycle array S.empty (0, 0)
-  where
-    array = parse input
+part1 input =
+  let grid = parse input
+   in length . nub . join . map (antinodes grid) . antennas $ grid
 
-findCycle :: Array Int (String, Int) -> S.Set Int -> (Int, Int) -> Int
-findCycle array seen (acc, pos)
-  | pos `S.member` seen = acc
-  | otherwise = findCycle array (S.insert pos seen) (step array (acc, pos))
+parse :: String -> Grid
+parse input =
+  let l = lines input
+      rows = length l
+      cols = length $ head l
+   in A.listArray ((1, 1), (rows, cols)) $ join l
 
-parse :: String -> Array Int (String, Int)
-parse input = listArray (0, length l) (map splitLine l)
-  where
-    l = lines input
-    toInt ('+' : str) = read str :: Int
-    toInt str = read str :: Int
-    splitLine str = (take 3 str, toInt $ drop 4 str)
+antennas :: Grid -> [(Char, [Pos])]
+antennas grid =
+  let assocs = sortBy (\a b -> compare (snd a) (snd b)) . filter ((/= '.') . snd) $ A.assocs grid
+      groups = groupBy (\a b -> snd a == snd b) assocs
+      combine = foldr (\(pos, char) (_, acc) -> (char, pos : acc)) ('0', [])
+   in traceShowId $ map combine groups
 
-step :: Array Int (String, Int) -> (Int, Int) -> (Int, Int)
-step array (acc, pos) = step' array (acc, pos) (array ! pos)
+antinodes :: Grid -> (Char, [Pos]) -> [Pos]
+antinodes grid (char, positions) =
+  let inBounds = A.inRange $ A.bounds grid
+      pairs = [(a, b) | a <- positions, b <- positions, a /= b]
+      anti (a, b) = addPos a (subPos a b)
+   in filter inBounds $ map anti pairs
 
-step' :: Array Int (String, Int) -> (Int, Int) -> (String, Int) -> (Int, Int)
-step' array (acc, pos) ("nop", num) = (acc, pos + 1)
-step' array (acc, pos) ("acc", num) = (acc + num, pos + 1)
-step' array (acc, pos) ("jmp", num) = (acc, pos + num)
+allAntinodes :: Grid -> (Char, [Pos]) -> [Pos]
+allAntinodes grid (char, positions) =
+  let inBounds = A.inRange $ A.bounds grid
+      pairs = [(a, b) | a <- positions, b <- positions, a /= b]
+      nodes (a, b) = takeWhile inBounds $ inLine a b
+   in join $ map nodes pairs
+
+inLine :: Pos -> Pos -> [Pos]
+inLine a b =
+  let next = flip addPos (subPos a b)
+   in iterate next a
+
+addPos :: Pos -> Pos -> Pos
+addPos (a1, b1) (a2, b2) = (a1 + a2, b1 + b2)
+
+subPos :: Pos -> Pos -> Pos
+subPos (a1, b1) (a2, b2) = (a1 - a2, b1 - b2)
 
 part2 :: String -> Int
-part2 input = fst . fromJust $ findEnd array S.empty False (0, 0)
-  where
-    array = parse input
-
-findEnd :: Array Int (String, Int) -> S.Set Int -> Bool -> (Int, Int) -> Maybe (Int, Int)
-findEnd array seen changed (acc, pos)
-  | pos `S.member` seen = Nothing
-  | pos >= length array - 1 = Just (acc, pos)
-  | traceShow (acc, pos, instruction, num) False = Nothing
-  | not changed && instruction == "nop" = next False (doStep ("nop", num)) `mplus` next True (doStep ("jmp", num))
-  | not changed && instruction == "jmp" = next False (doStep ("jmp", num)) `mplus` next True (doStep ("nop", num))
-  | otherwise = next changed (step array (acc, pos))
-  where
-    (instruction, num) = array ! pos
-    next = findEnd array (S.insert pos seen)
-    canSwitch = not changed && instruction `elem` ["nop", "jmp"]
-    doStep = step' array (acc, pos)
+part2 input =
+  let grid = parse input
+   in length . nub . join . map (allAntinodes grid) . antennas $ grid
