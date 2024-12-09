@@ -6,8 +6,10 @@ where
 
 import Control.Monad (join)
 import qualified Data.Array.IArray as A
+import Data.Bifunctor (second)
 import Data.List (find, nub)
 import Data.Maybe (fromJust, fromMaybe)
+import qualified Data.Set as S
 import Debug.Trace
 
 type Pos = (Int, Int)
@@ -35,7 +37,7 @@ parse input =
 
 step :: Grid -> Guard -> Maybe Guard
 step grid (pos, dir) =
-  let newPos = traceShow (pos, dir) $ addPos pos dir
+  let newPos = addPos pos dir
    in case grid A.!? newPos of
         Nothing -> Nothing
         Just '#' -> Just (pos, turnRight dir)
@@ -51,4 +53,19 @@ turnRight (1, 0) = (0, -1)
 turnRight (0, -1) = (-1, 0)
 
 part2 :: String -> Int
-part2 input = undefined
+part2 input =
+  let (grid, guard) = parse input
+   in length $ filter (\o -> loops grid guard o S.empty) (A.indices grid)
+
+loops :: Grid -> Guard -> Pos -> S.Set Guard -> Bool
+loops grid guard override seen
+  | guard `S.member` seen = True
+  | otherwise =
+      let newPos = uncurry addPos guard
+       in case grid A.!? newPos of
+            Nothing -> False
+            Just '#' -> turn
+            _ -> if newPos == override then turn else step newPos
+  where
+    turn = loops grid (second turnRight guard) override (S.insert guard seen)
+    step newPos = loops grid (newPos, snd guard) override (S.insert guard seen)
