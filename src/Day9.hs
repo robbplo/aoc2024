@@ -1,50 +1,45 @@
 module Day9
   ( part1,
-    part1',
     part2,
-    part2',
   )
 where
 
 import Control.Monad
-import Data.List (tails)
+import Data.Char
 import Debug.Trace
 
 part1 :: String -> Int
-part1 = part1' 25
+part1 input =
+  let disk = parse input False 0
+      empty = traceShowId $ length . filter (== ".") $ disk
+      combined = traceShowId $ combine disk $ (take empty . reverse . filter (/= ".")) disk
+   in checksum combined
 
-part1' :: Int -> String -> Int
-part1' size = snd . head . filter isValid . pairs . windows size . parse
+combine :: [String] -> [String] -> [String]
+combine _ [] = []
+combine [] _ = []
+combine ("." : xs) (y : ys) = y : combine xs ys
+combine (x : xs) ys = x : combine xs ys
 
-parse :: String -> [Int]
-parse = map read . lines
+checksum :: [String] -> Int
+checksum xs = sum $ zipWith (\a b -> read a * b) xs [0 ..]
 
-windows :: Int -> [a] -> [[a]]
-windows n = foldr (zipWith (:)) (repeat []) . take n . tails
-
-pairs :: [[a]] -> [([a], a)]
-pairs groups = zip groups (map last $ drop 1 groups)
-
-isValid :: (Num a, Eq a) => ([a], a) -> Bool
-isValid (window, number) = null combinations
-  where
-    combinations =
-      [ a + b
-        | a <- window,
-          b <- window,
-          a /= b,
-          a + b == number
-      ]
+parse :: String -> Bool -> Int -> [String]
+parse [] _ _ = []
+parse ('\n' : xs) isEmpty id = parse xs isEmpty id
+parse (x : xs) isEmpty id =
+  let count = digitToInt x
+      char = if isEmpty then "." else show id
+      newId = if isEmpty then id else succ id
+   in replicate count char <> parse xs (not isEmpty) newId
 
 part2 :: String -> Int
-part2 = part2' 25
+part2 = undefined
 
-part2' :: Int -> String -> Int
-part2' size input = minimum result + maximum result
-  where
-    p1 = part1' size input
-    windows = allWindows $ parse input
-    result = head $ filter (\x -> sum x == p1) windows
+-- 0099811188827773336446555566..............
+-- 009981118882777333644655556666667775888899
 
-allWindows :: [a] -> [[a]]
-allWindows input = join $ map (`windows` input) [2 .. length input]
+-- 00...111...2...333.44.5555.6666.777.888899
+-- 9988887776666555544333211100
+
+-- 009981118882777333644655556666667775
