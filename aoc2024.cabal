@@ -98,6 +98,7 @@ test-suite aoc2024-test
   main-is: Spec.hs
   other-modules:
       Day10Spec
+      Day11Spec
       Day1Spec
       Day2Spec
       Day3Spec
