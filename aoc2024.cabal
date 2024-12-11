@@ -97,6 +97,7 @@ test-suite aoc2024-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Day10Spec
       Day1Spec
       Day2Spec
       Day3Spec
