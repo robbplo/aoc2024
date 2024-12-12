@@ -99,6 +99,7 @@ test-suite aoc2024-test
   other-modules:
       Day10Spec
       Day11Spec
+      Day12Spec
       Day1Spec
       Day2Spec
       Day3Spec

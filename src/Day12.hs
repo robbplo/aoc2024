@@ -4,78 +4,58 @@ module Day12
   )
 where
 
+import Control.Monad
+import qualified Data.Array.IArray as A
 import Data.Function
+import Data.List (nubBy, nub)
+import qualified Data.Set as S
 import Debug.Trace
+import Data.Bifunctor
 
--- North/South, East/West, Rotation degrees starting East
-type Pos = (Int, Int, Int)
+type Pos = (Int, Int)
+
+type Grid = A.Array Pos Char
+
+parse :: String -> Grid
+parse input =
+  let l = lines input
+      rows = length l
+      cols = length $ head l
+   in A.listArray ((1, 1), (rows, cols)) $ join l
 
 part1 :: String -> Int
-part1 input = abs north + abs east
+part1 input = allPerimiters (parse input) S.empty
+
+allPerimiters :: Grid -> S.Set Pos -> [Int]
+allPerimiters grid visit =
+  let groups = nub $ map (\(i, e) -> (i, (getGroup grid e i))) (A.assocs grid)
+   in traceShowId $ map (\(i, e) -> perimiter grid e i S.empty) groups
+
+perimiter :: Grid -> Char -> Pos -> S.Set Pos -> Int
+perimiter grid char pos visit
+  | pos `S.member` visit = traceShow ("visit", pos) 0
+  | not $ A.inRange (A.bounds grid) pos = 1
+  -- \| traceShow (char, curr, pos) False = undefined
+  | curr == char = sum $ traceShowId $ map rec adjacent
+  | otherwise = 1
   where
-    instructions = parse input
-    (north, east, _) = foldr move (0, 0, 0) instructions
+    curr = grid A.! pos
+    rec p = perimiter grid char (addPos pos p) (S.insert pos visit)
 
-parse :: String -> [(Char, Int)]
-parse = map parseLine . lines
-
-parseLine :: String -> (Char, Int)
-parseLine (x : xs) = (x, read xs)
-
-move :: (Char, Int) -> Pos -> Pos
-move ('N', x) (n, e, r) = (n + x, e, r)
-move ('S', x) (n, e, r) = (n - x, e, r)
-move ('E', x) (n, e, r) = (n, e + x, r)
-move ('W', x) (n, e, r) = (n, e - x, r)
-move ('L', x) (n, e, r) = (n, e, degrees (r - x))
-move ('R', x) (n, e, r) = (n, e, degrees (r + x))
-move ('F', x) (n, e, r) = case r of
-  0 -> move ('E', x) (n, e, r)
-  90 -> move ('S', x) (n, e, r)
-  180 -> move ('W', x) (n, e, r)
-  270 -> move ('N', x) (n, e, r)
-  num -> error $ show num
-
-degrees n
-  | n >= 360 = degrees (n - 360)
-  | n < 0 = degrees (n + 360)
-  | otherwise = n
+getGroup :: Grid -> Char -> Pos -> [Pos]
+getGroup grid char pos
+  | not $ A.inRange (A.bounds grid) pos = []
+  | (grid A.! pos) /= char = []
+  | otherwise = pos : join (map (getGroup grid char . addPos pos) adjacent)
 
 part2 :: String -> Int
-part2 input = abs north + abs east
-  where
-    start = (1, 10, 0)
-    instructions = parse input
-    (north, east, _) = go instructions (0, 0, 0) start
+part2 input = undefined
 
-go :: [(Char, Int)] -> Pos -> Pos -> Pos
-go [] pos waypoint = pos
-go (('F', x) : xs) pos waypoint = go xs (add pos waypoint x) waypoint
-go (x : xs) pos waypoint = go xs pos (moveWaypoint x waypoint)
+surrounding :: [Pos]
+surrounding = [(r, c) | r <- [-1 .. 1], c <- [-1 .. 1], (r, c) /= (0, 0)]
 
-add (x1, y1, _) (x2, y2, r) times = (x1 + (x2 * times), y1 + (y2 * times), r)
+adjacent :: [Pos]
+adjacent = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
-moveWaypoint :: (Char, Int) -> Pos -> Pos
-moveWaypoint ('N', x) (n, e, r) = (n + x, e, r)
-moveWaypoint ('S', x) (n, e, r) = (n - x, e, r)
-moveWaypoint ('E', x) (n, e, r) = (n, e + x, r)
-moveWaypoint ('W', x) (n, e, r) = (n, e - x, r)
-moveWaypoint ('L', x) (n, e, r) = rotate (n, e, r) (matrix (-x))
-moveWaypoint ('R', x) (n, e, r) = rotate (n, e, r) (matrix x)
-moveWaypoint ('F', x) pos = pos
-
-matrix :: Int -> (Int, Int, Int, Int)
-matrix angle =
-  ( round $ cos t,
-    round $ -sin t,
-    round $ sin t,
-    round $ cos t
-  )
-  where
-    t = fromIntegral angle * (pi / 180)
-
-rotate :: Pos -> (Int, Int, Int, Int) -> Pos
-rotate (x, y, r) (x1, x2, y1, y2) = (x', y', 0)
-  where
-    x' = (x * x1) + (y * x2)
-    y' = (x * y1) + (y * y2)
+addPos :: Pos -> Pos -> Pos
+addPos (a, b) (c, d) = (a + c, b + d)
