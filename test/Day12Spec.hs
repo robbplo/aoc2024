@@ -4,7 +4,8 @@ import Day12
 import Test.Hspec
 
 input :: String
-input = init . unlines $ [ "AAAA",
+input = init . unlines $ [ 
+  "AAAA",
   "BBCD",
   "BBCC",
   "EEEC" ]

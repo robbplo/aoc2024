@@ -11,8 +11,6 @@ type Pos = (Int, Int) -- X, Y
 
 type Machine = (Pos, Pos, Pos) -- A, B, Prize
 
-type State = (Int, Int) -- As, Bs
-
 parse :: String -> [Machine]
 parse input = map parseMachine $ splitOn "\n\n" input
 
@@ -24,20 +22,23 @@ parseMachine input =
    in (pos (head l), pos (l !! 1), pos (l !! 2))
 
 part1 :: String -> Int
-part1 input = sum . traceShowId . map (minTokens (0, 0) 0) $ parse input
+part1 input = sum . map dingin $ parse input
 
-minTokens :: State -> Int -> Machine -> Int
-minTokens (as, bs) min (a, b, goal)
-  | as > 100 = min
-  | pos == goal = traceShow (as, bs) next (as + 1, bs - 3) ((as * 3) + bs)
-  | fst pos > fst goal || snd pos > snd goal = next (as + 1, bs - 3) min
-  | otherwise = next (as, bs + 1) min
-  where
-    pos = curr (a, b, goal) (as, bs)
-    next state' min' = minTokens state' min' (a, b, goal)
+dingin :: Machine -> Int
+dingin (a, b, prize) = let
+    base = (det a b)
+    bs = (det a prize) `div` base
+    as = (det b prize) `div` base
+    isInt = bs * base == (det a prize) && as * base == (det b prize)
+  in
+  if isInt then (abs(as) * 3) + abs(bs) else 0
 
-curr :: Machine -> State -> Pos
-curr ((ax, ay), (bx, by), _) (as, bs) = (ax * as + bx * bs, ay * as + by * bs)
+det :: Pos -> Pos -> Int
+det (a, b) (c, d) = (a * d) - (b * c)
 
 part2 :: String -> Int
-part2 input = undefined
+part2 input = sum . map (dingin . addLoads) $ parse input
+
+addLoads :: Machine -> Machine
+addLoads (a, b, (x, y)) = (a, b, (x + loads, y + loads))
+  where loads = 10000000000000
