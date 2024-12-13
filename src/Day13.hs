@@ -5,34 +5,39 @@ module Day13
 where
 
 import Data.List.Split (splitOn)
+import Debug.Trace
+
+type Pos = (Int, Int) -- X, Y
+
+type Machine = (Pos, Pos, Pos) -- A, B, Prize
+
+type State = (Int, Int) -- As, Bs
+
+parse :: String -> [Machine]
+parse input = map parseMachine $ splitOn "\n\n" input
+
+parseMachine :: String -> Machine
+parseMachine input =
+  let l = lines input
+      button = map (drop 2) . splitOn ", " . last . splitOn ": "
+      pos x = let b = button x in (read (head b), read (last b))
+   in (pos (head l), pos (l !! 1), pos (l !! 2))
 
 part1 :: String -> Int
-part1 input = minWait (parse input) (0, 999999999)
-    
+part1 input = sum . traceShowId . map (minTokens (0, 0) 0) $ parse input
 
-parse :: String -> (Int, [Int])
-parse input = (start, ids)
+minTokens :: State -> Int -> Machine -> Int
+minTokens (as, bs) min (a, b, goal)
+  | as > 100 = min
+  | pos == goal = traceShow (as, bs) next (as + 1, bs - 3) ((as * 3) + bs)
+  | fst pos > fst goal || snd pos > snd goal = next (as + 1, bs - 3) min
+  | otherwise = next (as, bs + 1) min
   where
-    l = lines input
-    start = read $ head l
-    ids = map read . filter (/= "x") . splitOn "," $ last l
+    pos = curr (a, b, goal) (as, bs)
+    next state' min' = minTokens state' min' (a, b, goal)
 
-minWait :: (Int, [Int]) -> (Int, Int) -> Int
-minWait (_, []) (id, min) = id * min
-minWait (start, x:xs) (id, min)
-  | wait < min = minWait (start, xs) (x, wait)
-  | otherwise = minWait (start, xs) (id, min)
-  where 
-    wait = abs $ (start `mod` x) - x
-
+curr :: Machine -> State -> Pos
+curr ((ax, ay), (bx, by), _) (as, bs) = (ax * as + bx * bs, ay * as + by * bs)
 
 part2 :: String -> Int
-part2 input = error "not implemented"
-
-parse2 :: String -> [Int]
-parse2 input = ids
-  where
-    line = last $ lines input
-    toInt "x" = 0
-    toInt c = read c
-    ids = map toInt . splitOn "," $ line
+part2 input = undefined

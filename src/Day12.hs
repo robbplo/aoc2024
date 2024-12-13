@@ -6,11 +6,11 @@ where
 
 import Control.Monad
 import qualified Data.Array.IArray as A
+import Data.Bifunctor
 import Data.Function
-import Data.List (nubBy, nub)
+import Data.List (nub, nubBy)
 import qualified Data.Set as S
 import Debug.Trace
-import Data.Bifunctor
 
 type Pos = (Int, Int)
 
@@ -24,12 +24,12 @@ parse input =
    in A.listArray ((1, 1), (rows, cols)) $ join l
 
 part1 :: String -> Int
-part1 input = allPerimiters (parse input) S.empty
+part1 input = undefined
 
-allPerimiters :: Grid -> S.Set Pos -> [Int]
-allPerimiters grid visit =
-  let groups = nub $ map (\(i, e) -> (i, (getGroup grid e i))) (A.assocs grid)
-   in traceShowId $ map (\(i, e) -> perimiter grid e i S.empty) groups
+-- allPerimiters :: Grid -> S.Set Pos -> [Int]
+-- allPerimiters grid visit =
+--   let groups = nub $ map (\(i, e) -> (i, (getGroup grid e i))) (A.assocs grid)
+--    in traceShowId $ map (\(i, e) -> perimiter grid e i S.empty) groups
 
 perimiter :: Grid -> Char -> Pos -> S.Set Pos -> Int
 perimiter grid char pos visit
