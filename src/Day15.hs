@@ -77,11 +77,5 @@ part1 input =
       start = player grid
    in score 'O' . fst . foldl (flip move) (grid, start) $ chars
 
-boxesMoving :: Grid -> Box -> Pos -> Maybe [Box]
-boxesMoving grid box (0, r) =
-
-toBox :: Pos -> Box
-toBox 
-
 part2 :: String -> Int
 part2 input = error "not implemented"

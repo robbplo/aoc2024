@@ -102,6 +102,7 @@ test-suite aoc2024-test
       Day12Spec
       Day13Spec
       Day15Spec
+      Day16Spec
       Day1Spec
       Day2Spec
       Day3Spec
