@@ -11,7 +11,7 @@ def puzzle(size = 70, file = "data/day17"):
     rows = cols = size + 1
 
 
-    def run(bytes ):
+    def run(bytes):
         grid = [[0 for c in range(cols)] for r in range(rows)]
 
         for l in lines[:bytes]:
