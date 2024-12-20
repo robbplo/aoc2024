@@ -66,19 +66,24 @@ def puzzle(file = "data/day17"):
             return []
 
         visitCheat.add((r,c))
-        neighbours = [(r + r2, c + c2) for (r2, c2) in [[0,1], [0, -1], [1,0], [-1,0]]]
-        cheatNeighbours = [(r + r2, c + c2) for (r2, c2) in [[0,2], [0, -2], [2,0], [-2,0]]]
+
+        maxDist = 20
+        cheatOffsets = [(r,c) for r in range(-maxDist, maxDist+1) for c in range(-maxDist, maxDist+1)]
+        cheatNeighbours = [(r + r2, c + c2) for (r2, c2) in cheatOffsets]
 
         for r_cheat, c_cheat in cheatNeighbours:
-            if ((r_cheat, c_cheat) not in minDists):
+            manhattan = abs(r - r_cheat) + abs(c - c_cheat)
+            if ((r_cheat, c_cheat) not in minDists or manhattan > maxDist):
                 continue
 
-            saved = defaultDist - (d + minDists[(r_cheat, c_cheat)]) - 2
+            cheatDist = d + manhattan + minDists[(r_cheat, c_cheat)]
+            saved = defaultDist - cheatDist
             if saved > 0:
                 cheats.append(saved)
             if saved >= 100:
                 i += 1
 
+        neighbours = [(r + r2, c + c2) for (r2, c2) in [[0,1], [0, -1], [1,0], [-1,0]]]
         for r, c in neighbours:
             cheatDists(r, c, d+1)
 
@@ -88,7 +93,6 @@ def puzzle(file = "data/day17"):
     for r, row in enumerate(grid):
         for c, col in enumerate(row):
             if col == 'S':
-                print(cheatDists(r, c, 0))
                 cheats.sort()
                 for a, b in itertools.groupby(cheats):
                     print(f"{a}: {len(list(b))}")
