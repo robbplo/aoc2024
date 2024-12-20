@@ -10,11 +10,12 @@ import Data.Bifunctor (second)
 import Data.List (find, nub)
 import Data.Maybe (fromJust, fromMaybe)
 import qualified Data.Set as S
+import qualified Data.Vector as V
 import Debug.Trace
 
 type Pos = (Int, Int)
 
-type Grid = A.Array Pos Char
+type Grid = V.Vector (V.Vector Char)
 
 type Guard = (Pos, Pos) -- Position, Direction
 
@@ -31,8 +32,8 @@ parse input =
   let l = lines input
       rows = length l
       cols = length $ head l
-      grid = A.listArray ((1, 1), (rows, cols)) $ join l
-      guardPos = fst $ fromJust $ find ((== '^') . snd) (A.assocs grid)
+      grid = V.fromList $ map V.fromList l
+      guardPos = gridFind grid '^'
    in (grid, (guardPos, (-1, 0)))
 
 step :: Grid -> Guard -> Maybe Guard
@@ -42,6 +43,11 @@ step grid (pos, dir) =
         Nothing -> Nothing
         Just '#' -> Just (pos, turnRight dir)
         _ -> Just (newPos, dir)
+
+gridFind :: Grid -> Char -> Pos
+gridFind grid char = head $ V.mapMaybe inRow grid
+  where
+    inRow row = V.elemIndex char row
 
 addPos :: Pos -> Pos -> Pos
 addPos (a1, b1) (a2, b2) = (a1 + a2, b1 + b2)

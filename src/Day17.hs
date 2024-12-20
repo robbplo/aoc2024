@@ -29,7 +29,6 @@ parse str = Map.fromList $ ((0, 0), 0) : pairs
   where
     pairs = map ((,-1) . line) (take 12 $ lines str)
 
-bfs :: Grid -> [Pos]
 line :: String -> Pos
 line l = read $ "(" <> l <> ")"
 
